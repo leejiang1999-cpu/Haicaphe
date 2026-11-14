@@ -3,76 +3,78 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Mùa Cà Phê Ea Kao</title>
+<title>Mùa Cà Phê Ea Kao 2D</title>
 <style>
-body{margin:0;font-family:sans-serif;background:#2e1a12;color:#fff;text-align:center;user-select:none}
-#box{max-width:420px;margin:auto;padding:12px}
-.bar{display:flex;justify-content:space-between;background:#4e2c1e;padding:10px;border-radius:10px;font-weight:bold;margin-bottom:10px}
-#area{position:relative;height:360px;background:#3b5e2b;border:3px solid #8d6e63;border-radius:12px;overflow:hidden}
-.hat{position:absolute;width:36px;height:36px;border-radius:50%;font-size:24px;line-height:36px;cursor:pointer}
-.btn{width:90%;padding:18px;font-size:20px;font-weight:bold;background:#ff9800;color:#2e1a12;border:none;border-radius:12px;margin-top:15px}
-#track{width:85%;height:24px;background:#1b0f0a;margin:30px auto;border-radius:12px;overflow:hidden}
-#prog{height:100%;width:0%;background:#4caf50;transition:0.1s}
+*{box-sizing:border-box;user-select:none;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:#1b0f0a;color:#fff;font-family:sans-serif;display:flex;flex-direction:column;align-items:center}
+#hud{width:100%;max-width:420px;display:flex;justify-content:space-between;padding:10px 14px;background:#3e2723;font-weight:bold;font-size:15px;border-bottom:2px solid #ff9800}
+canvas{width:100%;max-width:420px;height:420px;background:#87ceeb;display:block}
+#btn{width:92%;max-width:390px;padding:16px;margin:12px 0;font-size:19px;font-weight:bold;background:linear-gradient(#ffb74d,#f57c00);color:#2e1a12;border:none;border-radius:14px;box-shadow:0 5px 0 #bf360c}
+#btn:active{transform:translateY(4px);box-shadow:0 1px 0 #bf360c}
 </style>
 </head>
 <body>
-<div id="box">
-  <div class="bar"><span id="m">MAP 1: HÁI CÀ</span><span id="t">⏱ 45s</span><span id="w">⚖️ Nặng: 0kg</span></div>
-  <div id="area"></div>
-  <button class="btn" id="act" onclick="tap()">BẮT ĐẦU MÙA VỤ</button>
-</div>
+<div id="hud"><span id="m">MAP 1: HÁI CÀ</span><span id="t">⏱ 45s</span><span id="w">⚖️ 0kg xanh</span></div>
+<canvas id="c" width="420" height="420"></canvas>
+<button id="btn" onclick="act()">BẮT ĐẦU MÙA VỤ</button>
 <script>
-let map=0,tm=45,wt=0,p=0,iv,sp;
-const area=document.getElementById("area"),act=document.getElementById("act");
-function upUI(){
-  document.getElementById("t").innerText="⏱ "+tm+"s";
-  document.getElementById("w").innerText="⚖️ Nặng: "+wt+"kg";
+const cv=document.getElementById("c"),ctx=cv.getContext("2d"),btn=document.getElementById("btn");
+let st=0,tm=45,wt=0,pg=0,cnt=0,itms="",pts="",iv,sp;
+function ui(){document.getElementById("t").innerText="⏱ "+tm+"s";document.getElementById("w").innerText="⚖️ "+wt+"kg xanh";}
+function addPt(x,y,txt,cl){pts+=(pts?"|":"")+x+","+y+","+txt+","+cl+",25";}
+function act(){
+  if(st===0){st=1;tm=45;wt=0;pg=0;cnt=0;itms="";pts="";btn.style.display="none";document.getElementById("m").innerText="MAP 1: HẤT CÀ XANH";
+    iv=setInterval(()=>{tm--;ui();if(tm<=0)end(0);},1000);
+    sp=setInterval(()=>{if(st!==1)return;cnt++;if(cnt>24){clearInterval(sp);setTimeout(()=>{st=2;pg=0;btn.style.display="block";btn.innerText="KÉO BẠT MẠNH LÊN!";document.getElementById("m").innerText="MAP 2: KÉO BẠT";},1200);return;}
+      let g=Math.random()<0.65?1:0,x=Math.floor(Math.random()*340+40);
+      itms+=(itms?"|":"")+x+",60,"+g;},500);
+  }else if(st===2||st===3){
+    let spk=Math.max(2.5,11-Math.floor(wt/4));pg+=spk;addPt(200,260,wt>15?"NẶNG QUÁ!":"KÉO!",wt>15?"#ff5252":"#69f0ae");
+    if(pg>=100){pg=0;if(st===2){st=3;btn.innerText="VÁC BAO CHẠY NGAY!";document.getElementById("m").innerText="MAP 3: VÁC RA CÂN";}else end(1);}
+  }
 }
-function start(){
-  map=1;tm=45;wt=0;p=0;upUI();
-  act.style.display="none";
-  area.innerHTML="<p style='margin-top:150px'>Bấm hất văng hạt XANH 🟢! Giữ hạt ĐỎ 🔴!</p>";
-  iv=setInterval(()=>{tm--;upUI();if(tm<=0)end(0);},1000);
-  sp=setInterval(drop,550);
+cv.addEventListener("pointerdown",e=>{
+  if(st!==1)return;
+  let r=cv.getBoundingClientRect(),mx=(e.clientX-r.left)*(420/r.width),my=(e.clientY-r.top)*(420/r.height),nw="";
+  itms.split("|").forEach(s=>{if(!s)return;let p=s.split(","),x=+p.at(0),y=+p.at(1),g=+p.at(2);
+    if(Math.hypot(mx-x,my-y)<34){if(g===1)addPt(x,y,"HẤT HAY!","#69f0ae");else{wt+=2;ui();addPt(x,y,"RỚT CÀ CHÍN!","#ff5252");}}
+    else nw+=(nw?"|":"")+s;
+  });itms=nw;
+});
+function end(w){clearInterval(iv);clearInterval(sp);st=0;btn.style.display="block";btn.innerText="CHƠI LẠI MÙA MỚI";
+  alert(w?"🎉 HOÀN THÀNH! Dư "+tm+"s. Lẫn "+wt+"kg cà xanh, ghé quán anh Hiếu Ea Kao cân tính giá đẹp nhé!":"😭 HẾT GIỜ! Để lẫn "+wt+"kg cà xanh nặng quá kéo không nổi!");
 }
-function drop(){
-  if(map!==1)return;
-  p++;if(p>22){clearInterval(sp);toMap2();return;}
-  let isG=Math.random()<0.65;
-  let d=document.createElement("div");
-  d.className="hat";d.innerText=isG?"🟢":"🔴";
-  d.style.left=Math.floor(Math.random()*82+5)+"%";
-  d.style.top="0px";area.appendChild(d);
-  let y=0,fall=setInterval(()=>{
-    if(map!==1){clearInterval(fall);return;}
-    y+=6;d.style.top=y+"px";
-    if(y>320){clearInterval(fall);d.remove();if(isG){wt+=3;upUI();}}
-  },30);
-  d.onclick=()=>{if(isG){clearInterval(fall);d.remove();}else{wt+=2;upUI();d.remove();}};
+function loop(){
+  ctx.clearRect(0,0,420,420);
+  let sky=ctx.createLinearGradient(0,0,0,300);sky.addColorStop(0,"#4fc3f7");sky.addColorStop(1,"#e1f5fe");
+  ctx.fillStyle=sky;ctx.fillRect(0,0,420,300);
+  ctx.fillStyle="#6d4c41";ctx.fillRect(0,300,420,120);
+  if(st===1){
+    ctx.fillStyle="#2e7d32";ctx.beginPath();ctx.arc(210,10,230,0,Math.PI);ctx.fill();
+    ctx.fillStyle="#1565c0";ctx.fillRect(20,355,380,25);
+    let nw="";
+    itms.split("|").forEach(s=>{if(!s)return;let p=s.split(","),x=+p.at(0),y=+p.at(1)+5.5,g=+p.at(2);
+      ctx.fillStyle=g===1?"#7cb342":"#d32f2f";ctx.beginPath();ctx.ellipse(x,y,13,16,0.3,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle="rgba(255,255,255,0.4)";ctx.beginPath();ctx.arc(x-4,y-5,4,0,Math.PI*2);ctx.fill();
+      if(y>355){if(g===1){wt+=3;ui();addPt(x,340,"+3kg XANH","#ff5252");}}else nw+=(nw?"|":"")+x+","+y+","+g;
+    });itms=nw;
+  }else if(st===2||st===3){
+    let px=40+pg*2.8;
+    ctx.fillStyle="#ff9800";ctx.fillRect(350,210,60,90);ctx.fillStyle="#fff";ctx.font="bold 10px sans-serif";ctx.fillText("CÂN HIẾU",354,235);ctx.fillText("EA KAO",360,250);
+    ctx.fillStyle="#ffcc80";ctx.beginPath();ctx.arc(px,245,14,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#1976d2";ctx.fillRect(px-10,260,20,35);
+    if(st===2){ctx.strokeStyle="#fff";ctx.beginPath();ctx.moveTo(px-10,280);ctx.lineTo(px-35,295);ctx.stroke();
+      ctx.fillStyle="#1565c0";ctx.beginPath();ctx.ellipse(px-55,292,28,14+wt/3,0,0,Math.PI*2);ctx.fill();
+    }else{ctx.fillStyle="#d7ccc8";ctx.beginPath();ctx.ellipse(px-5,235,16,22+wt/3,-0.4,0,Math.PI*2);ctx.fill();}
+  }
+  let np="";
+  pts.split("|").forEach(s=>{if(!s)return;let p=s.split(","),x=+p.at(0),y=+p.at(1)-1.5,t=p.at(2),c=p.at(3),l=+p.at(4)-1;
+    ctx.fillStyle=c;ctx.font="bold 15px sans-serif";ctx.fillText(t,x-25,y);
+    if(l>0)np+=(np?"|":"")+x+","+y+","+t+","+c+","+l;
+  });pts=np;
+  requestAnimationFrame(loop);
 }
-function toMap2(){
-  map=2;p=0;document.getElementById("m").innerText="MAP 2: KÉO BẠT";
-  area.innerHTML="<h3>Bạt nặng "+(20+wt)+"kg! Bấm KÉO liên tục!</h3><div id='track'><div id='prog'></div></div><div style='font-size:50px'>🧺🚜</div>";
-  act.style.display="inline-block";act.innerText="KÉO BẠT VỀ SÂN!";
-}
-function toMap3(){
-  map=3;p=0;document.getElementById("m").innerText="MAP 3: VÁC BAO";
-  area.innerHTML="<h3>Vác bao ra cân anh Hiếu Ea Kao!</h3><div id='track'><div id='prog'></div></div><div style='font-size:50px'>🏃‍♂️🎒</div>";
-  act.innerText="VÁC BAO CHẠY!";
-}
-function tap(){
-  if(map===0){start();return;}
-  let step=Math.max(2,12-Math.floor(wt/4));
-  p+=step;if(p>100)p=100;
-  document.getElementById("prog").style.width=p+"%";
-  if(p>=100){if(map===2)toMap3();else if(map===3)end(1);}
-}
-function end(win){
-  clearInterval(iv);clearInterval(sp);map=0;
-  act.style.display="inline-block";act.innerText="CHƠI LẠI";
-  let msg=win?"🎉 XONG MÙA VỤ! Còn dư "+tm+"s. Cà lẫn "+wt+"kg xanh, ra quán anh Hiếu trừ bì nhẹ tay cho!":"😭 HẾT GIỜ! Hái ẩu nhiều cà xanh nặng quá vác không nổi!";
-  area.innerHTML="<h2 style='padding:40px 15px'>"+msg+"</h2>";
-}
+loop();
 </script>
 </body>
 </html>
