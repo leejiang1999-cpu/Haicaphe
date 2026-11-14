@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Mùa Cà Phê Ea Kao</title>
+<style>
+body{margin:0;font-family:sans-serif;background:#2e1a12;color:#fff;text-align:center;user-select:none}
+#box{max-width:420px;margin:auto;padding:12px}
+.bar{display:flex;justify-content:space-between;background:#4e2c1e;padding:10px;border-radius:10px;font-weight:bold;margin-bottom:10px}
+#area{position:relative;height:360px;background:#3b5e2b;border:3px solid #8d6e63;border-radius:12px;overflow:hidden}
+.hat{position:absolute;width:36px;height:36px;border-radius:50%;font-size:24px;line-height:36px;cursor:pointer}
+.btn{width:90%;padding:18px;font-size:20px;font-weight:bold;background:#ff9800;color:#2e1a12;border:none;border-radius:12px;margin-top:15px}
+#track{width:85%;height:24px;background:#1b0f0a;margin:30px auto;border-radius:12px;overflow:hidden}
+#prog{height:100%;width:0%;background:#4caf50;transition:0.1s}
+</style>
+</head>
+<body>
+<div id="box">
+  <div class="bar"><span id="m">MAP 1: HÁI CÀ</span><span id="t">⏱ 45s</span><span id="w">⚖️ Nặng: 0kg</span></div>
+  <div id="area"></div>
+  <button class="btn" id="act" onclick="tap()">BẮT ĐẦU MÙA VỤ</button>
+</div>
+<script>
+let map=0,tm=45,wt=0,p=0,iv,sp;
+const area=document.getElementById("area"),act=document.getElementById("act");
+function upUI(){
+  document.getElementById("t").innerText="⏱ "+tm+"s";
+  document.getElementById("w").innerText="⚖️ Nặng: "+wt+"kg";
+}
+function start(){
+  map=1;tm=45;wt=0;p=0;upUI();
+  act.style.display="none";
+  area.innerHTML="<p style='margin-top:150px'>Bấm hất văng hạt XANH 🟢! Giữ hạt ĐỎ 🔴!</p>";
+  iv=setInterval(()=>{tm--;upUI();if(tm<=0)end(0);},1000);
+  sp=setInterval(drop,550);
+}
+function drop(){
+  if(map!==1)return;
+  p++;if(p>22){clearInterval(sp);toMap2();return;}
+  let isG=Math.random()<0.65;
+  let d=document.createElement("div");
+  d.className="hat";d.innerText=isG?"🟢":"🔴";
+  d.style.left=Math.floor(Math.random()*82+5)+"%";
+  d.style.top="0px";area.appendChild(d);
+  let y=0,fall=setInterval(()=>{
+    if(map!==1){clearInterval(fall);return;}
+    y+=6;d.style.top=y+"px";
+    if(y>320){clearInterval(fall);d.remove();if(isG){wt+=3;upUI();}}
+  },30);
+  d.onclick=()=>{if(isG){clearInterval(fall);d.remove();}else{wt+=2;upUI();d.remove();}};
+}
+function toMap2(){
+  map=2;p=0;document.getElementById("m").innerText="MAP 2: KÉO BẠT";
+  area.innerHTML="<h3>Bạt nặng "+(20+wt)+"kg! Bấm KÉO liên tục!</h3><div id='track'><div id='prog'></div></div><div style='font-size:50px'>🧺🚜</div>";
+  act.style.display="inline-block";act.innerText="KÉO BẠT VỀ SÂN!";
+}
+function toMap3(){
+  map=3;p=0;document.getElementById("m").innerText="MAP 3: VÁC BAO";
+  area.innerHTML="<h3>Vác bao ra cân anh Hiếu Ea Kao!</h3><div id='track'><div id='prog'></div></div><div style='font-size:50px'>🏃‍♂️🎒</div>";
+  act.innerText="VÁC BAO CHẠY!";
+}
+function tap(){
+  if(map===0){start();return;}
+  let step=Math.max(2,12-Math.floor(wt/4));
+  p+=step;if(p>100)p=100;
+  document.getElementById("prog").style.width=p+"%";
+  if(p>=100){if(map===2)toMap3();else if(map===3)end(1);}
+}
+function end(win){
+  clearInterval(iv);clearInterval(sp);map=0;
+  act.style.display="inline-block";act.innerText="CHƠI LẠI";
+  let msg=win?"🎉 XONG MÙA VỤ! Còn dư "+tm+"s. Cà lẫn "+wt+"kg xanh, ra quán anh Hiếu trừ bì nhẹ tay cho!":"😭 HẾT GIỜ! Hái ẩu nhiều cà xanh nặng quá vác không nổi!";
+  area.innerHTML="<h2 style='padding:40px 15px'>"+msg+"</h2>";
+}
+</script>
+</body>
+</html>
